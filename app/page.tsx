@@ -240,8 +240,9 @@ export default function Home() {
             Import String
           </p>
           <div className="bg-card border border-border rounded-lg px-4 py-3.5 mb-2 overflow-hidden">
-            <p className="font-mono text-[12px] text-muted-foreground truncate leading-relaxed select-all">
-              {importString}
+            <p className="font-mono text-[12px] text-muted-foreground leading-relaxed select-all">
+              {importString.slice(0, 80)}
+              <span className="opacity-40">{importString.slice(80)}</span>
             </p>
           </div>
 

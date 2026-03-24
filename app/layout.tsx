@@ -1,19 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Cinzel, Rajdhani } from "next/font/google";
-import { cn } from "@/lib/utils";
-
-const cinzel = Cinzel({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  variable: "--font-cinzel",
-});
-
-const rajdhani = Rajdhani({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  variable: "--font-rajdhani",
-});
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 
 export const metadata: Metadata = {
   title: "Dropr — Raidbots Droptimizer Import",
@@ -29,7 +17,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("dark", cinzel.variable, rajdhani.variable)}
+      className={`dark ${GeistSans.variable} ${GeistMono.variable}`}
     >
       <body>{children}</body>
     </html>

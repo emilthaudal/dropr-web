@@ -10,7 +10,7 @@ import {
 } from "@/lib/raidbots";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -53,13 +53,13 @@ function DungeonCard({
   dungeon: DroprDungeon;
 }) {
   return (
-    <Card className="overflow-hidden rounded-lg ring-0 border border-border bg-card p-0 gap-0">
+    <Card className="overflow-hidden rounded-lg border border-border bg-card p-0 gap-0 shadow-none">
       {/* Dungeon header */}
-      <div className="flex items-center justify-between px-3.5 py-2.5 bg-dungeon-header border-b border-border">
-        <span className="font-cinzel text-sm font-semibold tracking-wide text-gold">
+      <div className="flex items-center justify-between px-3.5 py-2.5 bg-muted/40 border-b border-border">
+        <span className="text-sm font-semibold text-foreground">
           {dungeon.name}
         </span>
-        <span className="font-mono text-xs text-muted-foreground">
+        <span className="font-mono text-[11px] text-muted-foreground">
           #{instanceId}
         </span>
       </div>
@@ -69,10 +69,10 @@ function DungeonCard({
         {dungeon.items.map((item, i) => (
           <div
             key={item.id}
-            className="flex items-center gap-2.5 px-3.5 py-2 hover:bg-white/[0.02] transition-colors"
+            className="flex items-center gap-2.5 px-3.5 py-2 hover:bg-accent/40 transition-colors"
           >
             {/* Rank */}
-            <span className="text-[11px] font-bold text-muted-foreground w-3.5 text-center shrink-0">
+            <span className="text-[11px] font-medium text-muted-foreground w-3.5 text-center shrink-0">
               {i + 1}
             </span>
 
@@ -102,7 +102,7 @@ function DungeonCard({
                 {item.isCatalyst && (
                   <Badge
                     variant="outline"
-                    className="shrink-0 text-[10px] px-1 py-0 h-4 border-amber-500/60 text-amber-400 font-rajdhani tracking-wide"
+                    className="shrink-0 text-[10px] px-1 py-0 h-4 border-amber-500/50 text-amber-400 tracking-wide"
                   >
                     Catalyst
                   </Badge>
@@ -114,7 +114,7 @@ function DungeonCard({
             </div>
 
             {/* DPS gain */}
-            <span className="font-rajdhani text-sm font-bold text-green-gain shrink-0 tracking-wide">
+            <span className="font-mono text-sm font-semibold text-gain shrink-0">
               {formatDps(item.dpsGain)}
             </span>
           </div>
@@ -183,32 +183,13 @@ export default function Home() {
     : [];
 
   return (
-    <div className="relative z-10 min-h-screen max-w-[860px] mx-auto px-6 py-16 pb-20">
+    <div className="relative min-h-screen max-w-[860px] mx-auto px-6 py-16 pb-20">
       {/* Header */}
       <header className="text-center mb-14">
-        <h1
-          className="font-cinzel font-bold tracking-widest"
-          style={{
-            fontSize: "clamp(2rem, 5vw, 3.2rem)",
-            background:
-              "linear-gradient(135deg, var(--wow-gold) 0%, #ffe08a 50%, var(--wow-gold) 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-          }}
-        >
+        <h1 className="text-5xl font-bold tracking-tight text-foreground">
           Dropr
         </h1>
-        <div
-          className="mx-auto mt-5 mb-0"
-          style={{
-            width: 120,
-            height: 1,
-            background:
-              "linear-gradient(90deg, transparent, var(--wow-gold-dim), transparent)",
-          }}
-        />
-        <p className="mt-5 text-xs font-semibold tracking-[0.12em] uppercase text-muted-foreground">
+        <p className="mt-3 text-sm text-muted-foreground">
           Raidbots Droptimizer &rarr; In-Game Reminder
         </p>
       </header>
@@ -217,11 +198,11 @@ export default function Home() {
       <div className="mb-8">
         <label
           htmlFor="rburl"
-          className="block mb-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-muted-foreground"
+          className="block mb-2 text-sm font-medium text-foreground"
         >
           Raidbots Droptimizer URL
         </label>
-        <div className="flex gap-2.5">
+        <div className="flex gap-2">
           <Input
             id="rburl"
             type="url"
@@ -230,12 +211,12 @@ export default function Home() {
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
             disabled={status === "loading"}
-            className="flex-1 h-11 bg-card border-border/60 text-foreground placeholder:text-muted-foreground focus-visible:border-primary font-rajdhani text-base"
+            className="flex-1 h-10 bg-card border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
           />
           <Button
             onClick={handleGenerate}
             disabled={status === "loading" || !url.trim()}
-            className="font-cinzel text-[13px] tracking-widest h-11 px-6 bg-primary hover:bg-primary/80"
+            className="h-10 px-5 font-medium"
           >
             {status === "loading" ? "Loading\u2026" : "Generate"}
           </Button>
@@ -255,20 +236,20 @@ export default function Home() {
       {status === "done" && payload && (
         <div className="mt-10">
           {/* Import string */}
-          <p className="mb-2.5 text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground font-cinzel">
+          <p className="mb-2 text-sm font-medium text-foreground">
             Import String
           </p>
-          <div className="bg-card border border-border/60 rounded-lg px-4 py-3.5 mb-2">
-            <p className="font-mono text-[12px] text-primary break-all leading-relaxed select-all">
+          <div className="bg-card border border-border rounded-lg px-4 py-3.5 mb-2">
+            <p className="font-mono text-[12px] text-muted-foreground break-all leading-relaxed select-all">
               {importString}
             </p>
           </div>
 
           {/* Copy row */}
           <div className="flex items-center justify-between gap-3 mb-8">
-            <p className="text-[13px] text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               In-game:{" "}
-              <code className="bg-card border border-border/60 rounded px-2 py-0.5 font-mono text-[12px] text-primary">
+              <code className="bg-muted rounded px-1.5 py-0.5 font-mono text-[12px] text-foreground">
                 /dropr import
               </code>{" "}
               then paste
@@ -277,33 +258,33 @@ export default function Home() {
               variant="outline"
               onClick={handleCopy}
               className={cn(
-                "font-rajdhani font-semibold tracking-wide h-9",
-                copied && "border-[var(--wow-green)] text-[var(--wow-green)]"
+                "h-9 text-sm font-medium",
+                copied && "border-green-600 text-green-500"
               )}
             >
               {copied ? "Copied!" : "Copy to Clipboard"}
             </Button>
           </div>
 
-          <Separator className="mb-6 bg-border/60" />
+          <Separator className="mb-6" />
 
           {/* Char info */}
-          <div className="flex items-center gap-4 mb-7 px-4 py-3.5 bg-card border border-border/40 rounded-lg">
-            <span className="font-cinzel text-lg text-gold">{payload.char}</span>
-            <span className="text-border/60">·</span>
-            <span className="text-sm text-muted-foreground capitalize tracking-wide">
+          <div className="flex items-center gap-3 mb-7">
+            <span className="text-base font-semibold text-foreground">{payload.char}</span>
+            <span className="text-border">·</span>
+            <span className="text-sm text-muted-foreground capitalize">
               {payload.spec}
             </span>
-            <span className="text-border/60">·</span>
-            <Badge variant="secondary" className="font-rajdhani text-xs tracking-wide">
+            <span className="text-border">·</span>
+            <Badge variant="secondary" className="text-xs">
               {Object.keys(payload.dungeons).length} dungeon
               {Object.keys(payload.dungeons).length !== 1 ? "s" : ""}
             </Badge>
           </div>
 
           {/* Section label */}
-          <p className="mb-4 text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground font-cinzel">
-            All Upgrades &ge;100 DPS &mdash; sorted by best upgrade
+          <p className="mb-4 text-sm font-medium text-muted-foreground">
+            All upgrades &ge;100 DPS, sorted by best upgrade
           </p>
 
           {/* Dungeon grid */}
@@ -321,7 +302,7 @@ export default function Home() {
       )}
 
       {/* Footer */}
-      <footer className="text-center mt-16 text-[11px] text-muted-foreground tracking-widest uppercase">
+      <footer className="text-center mt-16 text-xs text-muted-foreground">
         Not affiliated with Raidbots or Blizzard Entertainment.
       </footer>
     </div>

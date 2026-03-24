@@ -3,28 +3,27 @@
 @tailwind utilities;
 
 @layer base {
-  /* Force dark WoW palette — only dark mode used */
   :root,
   .dark {
-    --background: 225 20% 6%;
-    --foreground: 214 32% 91%;
-    --card: 228 20% 8%;
-    --card-foreground: 214 32% 91%;
-    --popover: 228 20% 8%;
-    --popover-foreground: 214 32% 91%;
-    --primary: 220 100% 65%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 228 20% 11%;
-    --secondary-foreground: 214 32% 91%;
-    --muted: 228 20% 11%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 220 100% 65%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 91% 71%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 228 28% 16%;
-    --input: 228 28% 20%;
-    --ring: 220 100% 65%;
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 11%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 11%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14%;
+    --input: 0 0% 14%;
+    --ring: 0 0% 83%;
     --radius: 0.5rem;
   }
 
@@ -34,42 +33,20 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-rajdhani, 'Rajdhani', sans-serif);
-    position: relative;
-  }
-
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    background-image:
-      linear-gradient(hsl(228 28% 16%) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(228 28% 16%) 1px, transparent 1px);
-    background-size: 48px 48px;
-    opacity: 0.35;
-    pointer-events: none;
+    font-family: var(--font-geist-sans, sans-serif);
   }
 
   html {
-    font-family: var(--font-rajdhani, 'Rajdhani', sans-serif);
+    font-family: var(--font-geist-sans, sans-serif);
   }
 }
 
 @layer utilities {
-  .font-cinzel {
-    font-family: var(--font-cinzel, 'Cinzel', serif);
+  .font-mono {
+    font-family: var(--font-geist-mono, monospace);
   }
-  .font-rajdhani {
-    font-family: var(--font-rajdhani, 'Rajdhani', sans-serif);
-  }
-  .text-gold {
-    color: #c8a84b;
-  }
-  .text-green-gain {
-    color: #3ecf8e;
-  }
-  .bg-dungeon-header {
-    background-color: #0d1018;
+
+  .text-gain {
+    color: hsl(142 71% 45%);
   }
 }

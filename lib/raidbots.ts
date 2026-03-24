@@ -88,7 +88,7 @@ interface RBData {
 // ---------------------------------------------------------------------------
 
 export async function fetchAndParse(reportId: string): Promise<DroprPayload> {
-  const url = `https://www.raidbots.com/simbot/report/${reportId}/data.json`;
+  const url = `https://www.raidbots.com/reports/${reportId}/data.json`;
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch report: ${res.status} ${res.statusText}`);
@@ -125,7 +125,7 @@ export async function fetchAndParse(reportId: string): Promise<DroprPayload> {
     if (!itemId || !slot) continue;
 
     const dpsGain = Math.round(result.mean - baseline);
-    if (dpsGain <= 0) continue;
+    if (dpsGain < 100) continue;
 
     const item = itemMap.get(itemId);
     if (!item) continue;
@@ -160,7 +160,7 @@ export async function fetchAndParse(reportId: string): Promise<DroprPayload> {
     }
   }
 
-  // Build final payload: top 3 per dungeon sorted by dpsGain desc
+  // Build final payload: all qualifying items per dungeon sorted by dpsGain desc
   const dungeons: Record<string, DroprDungeon> = {};
 
   for (const [instanceId, itemsMap] of dungeonItems.entries()) {
@@ -173,7 +173,7 @@ export async function fetchAndParse(reportId: string): Promise<DroprPayload> {
 
     dungeons[String(instanceId)] = {
       name: instance.name,
-      items: sorted.slice(0, 3),
+      items: sorted,
     };
   }
 

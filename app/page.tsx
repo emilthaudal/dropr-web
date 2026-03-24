@@ -8,6 +8,12 @@ import {
   DroprPayload,
   DroprDungeon,
 } from "@/lib/raidbots";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Slot display labels
@@ -47,18 +53,33 @@ function DungeonCard({
   dungeon: DroprDungeon;
 }) {
   return (
-    <div className="dungeon-card">
-      <div className="dungeon-header">
-        <span className="dungeon-name">{dungeon.name}</span>
-        <span className="dungeon-id">#{instanceId}</span>
+    <Card className="overflow-hidden rounded-lg ring-0 border border-border bg-card p-0 gap-0">
+      {/* Dungeon header */}
+      <div className="flex items-center justify-between px-3.5 py-2.5 bg-dungeon-header border-b border-border">
+        <span className="font-cinzel text-sm font-semibold tracking-wide text-gold">
+          {dungeon.name}
+        </span>
+        <span className="font-mono text-xs text-muted-foreground">
+          #{instanceId}
+        </span>
       </div>
-      <div className="item-list">
+
+      {/* Item list */}
+      <div className="divide-y divide-border">
         {dungeon.items.map((item, i) => (
-          <div key={item.id} className="item-row">
-            <span className="item-rank">{i + 1}</span>
+          <div
+            key={item.id}
+            className="flex items-center gap-2.5 px-3.5 py-2 hover:bg-white/[0.02] transition-colors"
+          >
+            {/* Rank */}
+            <span className="text-[11px] font-bold text-muted-foreground w-3.5 text-center shrink-0">
+              {i + 1}
+            </span>
+
+            {/* Icon */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              className="item-icon"
+              className="w-8 h-8 rounded border border-border/60 shrink-0"
               src={`https://wow.zamimg.com/images/wow/icons/medium/${item.icon}.jpg`}
               alt={item.name}
               onError={(e) => {
@@ -66,17 +87,25 @@ function DungeonCard({
                   "https://wow.zamimg.com/images/wow/icons/medium/inv_misc_questionmark.jpg";
               }}
             />
-            <div className="item-info">
-              <span className="item-name">{item.name}</span>
-              <span className="item-meta">
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate leading-tight">
+                {item.name}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
                 {SLOT_LABELS[item.slot] ?? item.slot} &middot; {item.boss}
-              </span>
+              </p>
             </div>
-            <span className="item-gain">{formatDps(item.dpsGain)}</span>
+
+            {/* DPS gain */}
+            <span className="font-rajdhani text-sm font-bold text-green-gain shrink-0 tracking-wide">
+              {formatDps(item.dpsGain)}
+            </span>
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -139,330 +168,147 @@ export default function Home() {
     : [];
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Rajdhani:wght@300;400;500;600&display=swap');
+    <div className="relative z-10 min-h-screen max-w-[860px] mx-auto px-6 py-16 pb-20">
+      {/* Header */}
+      <header className="text-center mb-14">
+        <h1
+          className="font-cinzel font-bold tracking-widest"
+          style={{
+            fontSize: "clamp(2rem, 5vw, 3.2rem)",
+            background:
+              "linear-gradient(135deg, var(--wow-gold) 0%, #ffe08a 50%, var(--wow-gold) 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          Dropr
+        </h1>
+        <div
+          className="mx-auto mt-5 mb-0"
+          style={{
+            width: 120,
+            height: 1,
+            background:
+              "linear-gradient(90deg, transparent, var(--wow-gold-dim), transparent)",
+          }}
+        />
+        <p className="mt-5 text-xs font-semibold tracking-[0.12em] uppercase text-muted-foreground">
+          Raidbots Droptimizer &rarr; In-Game Reminder
+        </p>
+      </header>
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        :root {
-          --bg:        #0a0b0d;
-          --surface:   #111318;
-          --border:    #1e2330;
-          --border-hi: #2e3650;
-          --accent:    #4f8cff;
-          --accent-dim:#2a4e99;
-          --gold:      #c8a84b;
-          --gold-dim:  #7a6028;
-          --green:     #3ecf8e;
-          --text:      #e2e8f0;
-          --muted:     #64748b;
-          --danger:    #f87171;
-        }
-
-        html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Rajdhani', sans-serif; font-size: 16px; line-height: 1.5; }
-
-        body::before {
-          content: '';
-          position: fixed; inset: 0; z-index: 0;
-          background-image:
-            linear-gradient(var(--border) 1px, transparent 1px),
-            linear-gradient(90deg, var(--border) 1px, transparent 1px);
-          background-size: 48px 48px;
-          opacity: 0.35;
-          pointer-events: none;
-        }
-
-        .page {
-          position: relative; z-index: 1;
-          min-height: 100vh;
-          max-width: 860px;
-          margin: 0 auto;
-          padding: 64px 24px 80px;
-        }
-
-        .header { text-align: center; margin-bottom: 56px; }
-        .logo {
-          font-family: 'Cinzel', serif;
-          font-size: clamp(2rem, 5vw, 3.2rem);
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          background: linear-gradient(135deg, var(--gold) 0%, #ffe08a 50%, var(--gold) 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        .tagline {
-          margin-top: 8px;
-          font-size: 1rem;
-          font-weight: 400;
-          color: var(--muted);
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-        }
-        .divider {
-          width: 120px; height: 1px;
-          background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
-          margin: 20px auto 0;
-        }
-
-        .input-section { margin-bottom: 32px; }
-        .field-label {
-          display: block;
-          font-size: 0.75rem;
-          font-weight: 600;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: var(--muted);
-          margin-bottom: 8px;
-        }
-        .input-row { display: flex; gap: 10px; }
-        .url-input {
-          flex: 1;
-          background: var(--surface);
-          border: 1px solid var(--border-hi);
-          border-radius: 6px;
-          padding: 12px 16px;
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 0.95rem;
-          color: var(--text);
-          outline: none;
-          transition: border-color 0.15s;
-        }
-        .url-input::placeholder { color: var(--muted); }
-        .url-input:focus { border-color: var(--accent); }
-
-        .btn {
-          padding: 12px 24px;
-          border-radius: 6px;
-          border: none;
-          font-family: 'Cinzel', serif;
-          font-size: 0.85rem;
-          font-weight: 600;
-          letter-spacing: 0.08em;
-          cursor: pointer;
-          transition: opacity 0.15s, transform 0.1s;
-          white-space: nowrap;
-        }
-        .btn:active { transform: scale(0.97); }
-        .btn-primary {
-          background: linear-gradient(135deg, var(--accent-dim), var(--accent));
-          color: #fff;
-        }
-        .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
-        .btn-copy {
-          background: var(--surface);
-          border: 1px solid var(--border-hi);
-          color: var(--text);
-          font-family: 'Rajdhani', sans-serif;
-          font-weight: 600;
-          letter-spacing: 0.04em;
-        }
-        .btn-copy.copied { border-color: var(--green); color: var(--green); }
-
-        .status-msg { margin-top: 12px; font-size: 0.9rem; font-weight: 500; }
-        .status-loading { color: var(--muted); }
-        .status-error { color: var(--danger); }
-
-        .result-section { margin-top: 40px; }
-        .section-title {
-          font-family: 'Cinzel', serif;
-          font-size: 0.75rem;
-          font-weight: 600;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: var(--muted);
-          margin-bottom: 10px;
-        }
-
-        .import-box {
-          background: var(--surface);
-          border: 1px solid var(--border-hi);
-          border-radius: 6px;
-          padding: 14px 16px;
-          margin-bottom: 8px;
-        }
-        .import-string {
-          font-family: 'Courier New', monospace;
-          font-size: 0.78rem;
-          color: var(--accent);
-          word-break: break-all;
-          line-height: 1.5;
-          user-select: all;
-        }
-
-        .copy-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 32px;
-        }
-        .copy-hint { font-size: 0.82rem; color: var(--muted); }
-        .slash-cmd {
-          display: inline-block;
-          background: #1a1f2e;
-          border: 1px solid var(--border-hi);
-          border-radius: 4px;
-          padding: 2px 8px;
-          font-family: 'Courier New', monospace;
-          font-size: 0.8rem;
-          color: var(--accent);
-        }
-
-        .char-info {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          margin-bottom: 28px;
-          padding: 14px 18px;
-          background: var(--surface);
-          border: 1px solid var(--border);
-          border-radius: 8px;
-        }
-        .char-name { font-family: 'Cinzel', serif; font-size: 1.1rem; color: var(--gold); }
-        .char-spec { font-size: 0.85rem; color: var(--muted); text-transform: capitalize; letter-spacing: 0.04em; }
-        .char-sep { color: var(--border-hi); }
-
-        .dungeon-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-          gap: 16px;
-        }
-
-        .dungeon-card {
-          background: var(--surface);
-          border: 1px solid var(--border);
-          border-radius: 8px;
-          overflow: hidden;
-          transition: border-color 0.15s;
-        }
-        .dungeon-card:hover { border-color: var(--border-hi); }
-
-        .dungeon-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 10px 14px;
-          background: #0d1018;
-          border-bottom: 1px solid var(--border);
-        }
-        .dungeon-name {
-          font-family: 'Cinzel', serif;
-          font-size: 0.82rem;
-          font-weight: 600;
-          color: var(--gold);
-          letter-spacing: 0.04em;
-        }
-        .dungeon-id { font-size: 0.7rem; color: var(--muted); font-family: monospace; }
-
-        .item-list { padding: 6px 0; }
-        .item-row {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 8px 14px;
-          border-bottom: 1px solid var(--border);
-          transition: background 0.1s;
-        }
-        .item-row:last-child { border-bottom: none; }
-        .item-row:hover { background: rgba(255,255,255,0.02); }
-
-        .item-rank { font-size: 0.7rem; font-weight: 700; color: var(--muted); width: 14px; flex-shrink: 0; text-align: center; }
-        .item-icon { width: 32px; height: 32px; border-radius: 4px; border: 1px solid var(--border-hi); flex-shrink: 0; }
-        .item-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-        .item-name { font-size: 0.88rem; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .item-meta { font-size: 0.75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .item-gain { font-family: 'Rajdhani', sans-serif; font-size: 0.9rem; font-weight: 700; color: var(--green); flex-shrink: 0; letter-spacing: 0.02em; }
-
-        .footer { text-align: center; margin-top: 64px; font-size: 0.75rem; color: var(--muted); letter-spacing: 0.06em; }
-      `}</style>
-
-      <div className="page">
-        <header className="header">
-          <div className="logo">Dropr</div>
-          <div className="divider" />
-          <p className="tagline">Raidbots Droptimizer → In-Game Reminder</p>
-        </header>
-
-        <div className="input-section">
-          <label className="field-label" htmlFor="rburl">
-            Raidbots Droptimizer URL
-          </label>
-          <div className="input-row">
-            <input
-              id="rburl"
-              className="url-input"
-              type="url"
-              placeholder="https://www.raidbots.com/simbot/report/..."
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-              disabled={status === "loading"}
-            />
-            <button
-              className="btn btn-primary"
-              onClick={handleGenerate}
-              disabled={status === "loading" || !url.trim()}
-            >
-              {status === "loading" ? "Loading…" : "Generate"}
-            </button>
-          </div>
-          {status === "loading" && (
-            <p className="status-msg status-loading">
-              Fetching report from Raidbots…
-            </p>
-          )}
-          {status === "error" && (
-            <p className="status-msg status-error">{error}</p>
-          )}
+      {/* URL Input */}
+      <div className="mb-8">
+        <label
+          htmlFor="rburl"
+          className="block mb-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-muted-foreground"
+        >
+          Raidbots Droptimizer URL
+        </label>
+        <div className="flex gap-2.5">
+          <Input
+            id="rburl"
+            type="url"
+            placeholder="https://www.raidbots.com/simbot/report/..."
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
+            disabled={status === "loading"}
+            className="flex-1 h-11 bg-card border-border/60 text-foreground placeholder:text-muted-foreground focus-visible:border-primary font-rajdhani text-base"
+          />
+          <Button
+            onClick={handleGenerate}
+            disabled={status === "loading" || !url.trim()}
+            className="font-cinzel text-[13px] tracking-widest h-11 px-6 bg-primary hover:bg-primary/80"
+          >
+            {status === "loading" ? "Loading\u2026" : "Generate"}
+          </Button>
         </div>
 
-        {status === "done" && payload && (
-          <div className="result-section">
-            <p className="section-title">Import String</p>
-            <div className="import-box">
-              <div className="import-string">{importString}</div>
-            </div>
-            <div className="copy-row">
-              <p className="copy-hint">
-                In-game: <span className="slash-cmd">/dropr import</span> then
-                paste
-              </p>
-              <button
-                className={`btn btn-copy${copied ? " copied" : ""}`}
-                onClick={handleCopy}
-              >
-                {copied ? "Copied!" : "Copy to Clipboard"}
-              </button>
-            </div>
-
-            <div className="char-info">
-              <span className="char-name">{payload.char}</span>
-              <span className="char-sep">·</span>
-              <span className="char-spec">{payload.spec}</span>
-              <span className="char-sep">·</span>
-              <span className="char-spec">
-                {Object.keys(payload.dungeons).length} dungeon
-                {Object.keys(payload.dungeons).length !== 1 ? "s" : ""}
-              </span>
-            </div>
-
-            <p className="section-title">
-              Top 3 Items Per Dungeon — sorted by best upgrade
-            </p>
-            <div className="dungeon-grid">
-              {dungeonEntries.map(([id, dungeon]) => (
-                <DungeonCard key={id} instanceId={id} dungeon={dungeon} />
-              ))}
-            </div>
-          </div>
+        {status === "loading" && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Fetching report from Raidbots\u2026
+          </p>
         )}
-
-        <footer className="footer">
-          Not affiliated with Raidbots or Blizzard Entertainment.
-        </footer>
+        {status === "error" && (
+          <p className="mt-3 text-sm text-destructive">{error}</p>
+        )}
       </div>
-    </>
+
+      {/* Results */}
+      {status === "done" && payload && (
+        <div className="mt-10">
+          {/* Import string */}
+          <p className="mb-2.5 text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground font-cinzel">
+            Import String
+          </p>
+          <div className="bg-card border border-border/60 rounded-lg px-4 py-3.5 mb-2">
+            <p className="font-mono text-[12px] text-primary break-all leading-relaxed select-all">
+              {importString}
+            </p>
+          </div>
+
+          {/* Copy row */}
+          <div className="flex items-center justify-between gap-3 mb-8">
+            <p className="text-[13px] text-muted-foreground">
+              In-game:{" "}
+              <code className="bg-card border border-border/60 rounded px-2 py-0.5 font-mono text-[12px] text-primary">
+                /dropr import
+              </code>{" "}
+              then paste
+            </p>
+            <Button
+              variant="outline"
+              onClick={handleCopy}
+              className={cn(
+                "font-rajdhani font-semibold tracking-wide h-9",
+                copied && "border-[var(--wow-green)] text-[var(--wow-green)]"
+              )}
+            >
+              {copied ? "Copied!" : "Copy to Clipboard"}
+            </Button>
+          </div>
+
+          <Separator className="mb-6 bg-border/60" />
+
+          {/* Char info */}
+          <div className="flex items-center gap-4 mb-7 px-4 py-3.5 bg-card border border-border/40 rounded-lg">
+            <span className="font-cinzel text-lg text-gold">{payload.char}</span>
+            <span className="text-border/60">·</span>
+            <span className="text-sm text-muted-foreground capitalize tracking-wide">
+              {payload.spec}
+            </span>
+            <span className="text-border/60">·</span>
+            <Badge variant="secondary" className="font-rajdhani text-xs tracking-wide">
+              {Object.keys(payload.dungeons).length} dungeon
+              {Object.keys(payload.dungeons).length !== 1 ? "s" : ""}
+            </Badge>
+          </div>
+
+          {/* Section label */}
+          <p className="mb-4 text-[11px] font-semibold tracking-[0.14em] uppercase text-muted-foreground font-cinzel">
+            All Upgrades &ge;100 DPS &mdash; sorted by best upgrade
+          </p>
+
+          {/* Dungeon grid */}
+          <div
+            className="grid gap-4"
+            style={{
+              gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))",
+            }}
+          >
+            {dungeonEntries.map(([id, dungeon]) => (
+              <DungeonCard key={id} instanceId={id} dungeon={dungeon} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <footer className="text-center mt-16 text-[11px] text-muted-foreground tracking-widest uppercase">
+        Not affiliated with Raidbots or Blizzard Entertainment.
+      </footer>
+    </div>
   );
 }

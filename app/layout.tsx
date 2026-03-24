@@ -1,9 +1,19 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Geist } from "next/font/google";
+import { Cinzel, Rajdhani } from "next/font/google";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const cinzel = Cinzel({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-cinzel",
+});
+
+const rajdhani = Rajdhani({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  variable: "--font-rajdhani",
+});
 
 export const metadata: Metadata = {
   title: "Dropr — Raidbots Droptimizer Import",
@@ -17,7 +27,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
+    <html
+      lang="en"
+      className={cn("dark", cinzel.variable, rajdhani.variable)}
+    >
       <body>{children}</body>
     </html>
   );

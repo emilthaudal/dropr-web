@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "drweb",
+  "project_id": "0068a379-af77-4c4f-92b2-fbd307a16b07"
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   extractReportId,
   fetchAndParse,
@@ -14,6 +14,119 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+
+// ---------------------------------------------------------------------------
+// HelpModal
+// ---------------------------------------------------------------------------
+const STEPS = [
+  {
+    n: "1",
+    title: "Run a Droptimizer on Raidbots",
+    body: 'Go to raidbots.com, run a Droptimizer sim for your character. Make sure "Mythic+" is included in the sim options so dungeon loot is covered.',
+  },
+  {
+    n: "2",
+    title: "Paste the report URL here",
+    body: "Copy the URL of your finished Raidbots report and paste it into the input on this page, then click Generate.",
+  },
+  {
+    n: "3",
+    title: "Copy the import string",
+    body: 'Click "Copy to Clipboard" to copy your personal import string. This encodes all your dungeon upgrade data.',
+  },
+  {
+    n: "4",
+    title: "Import in-game",
+    body: 'Open the import window with /dropr import and paste the string, then click Confirm. You can also run /dropr import <string> directly in chat.',
+  },
+  {
+    n: "5",
+    title: "Zone into a dungeon",
+    body: "Dropr will automatically show a reminder frame with your top upgrade items whenever you enter a tracked M+ dungeon. No setup needed.",
+  },
+];
+
+function HelpModal({ onClose }: { onClose: () => void }) {
+  const handleKey = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [handleKey]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="How to use Dropr"
+    >
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Panel */}
+      <div className="relative w-full max-w-lg bg-card border border-border rounded-xl shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-base font-semibold text-foreground">
+            How to use Dropr
+          </h2>
+          <button
+            onClick={onClose}
+            aria-label="Close help"
+            className="text-muted-foreground hover:text-foreground transition-colors rounded p-1 -mr-1"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Steps */}
+        <ol className="px-6 py-5 space-y-5">
+          {STEPS.map((step) => (
+            <li key={step.n} className="flex gap-4">
+              <span className="shrink-0 w-6 h-6 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center font-mono text-[11px] font-semibold text-primary mt-0.5">
+                {step.n}
+              </span>
+              <div>
+                <p className="text-sm font-medium text-foreground leading-snug">
+                  {step.title}
+                </p>
+                <p className="mt-0.5 text-sm text-muted-foreground leading-relaxed">
+                  {step.body}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ol>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-border bg-muted/20">
+          <p className="text-xs text-muted-foreground">
+            Dropr is a free, open-source addon.{" "}
+            <a
+              href="https://github.com/emilthaudal/Dropr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:text-foreground transition-colors"
+            >
+              View on GitHub
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Slot display labels
@@ -136,6 +249,7 @@ export default function Home() {
   const [importString, setImportString] = useState("");
   const [payload, setPayload] = useState<DroprPayload | null>(null);
   const [copied, setCopied] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   async function handleGenerate() {
     setStatus("loading");
@@ -184,6 +298,20 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen max-w-[860px] mx-auto px-6 py-16 pb-20">
+      {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
+
+      {/* Help button — top right */}
+      <button
+        onClick={() => setHelpOpen(true)}
+        aria-label="Help"
+        className="fixed top-4 right-4 z-40 flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors shadow-sm"
+      >
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" className="shrink-0">
+          <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.92 6.085h.001a.749.749 0 1 1-1.342-.67C6.223 4.703 7.033 4.25 8 4.25c1.6 0 2.75 1.082 2.75 2.5 0 1.008-.615 1.7-1.25 2.113v.637a.75.75 0 0 1-1.5 0v-1a.75.75 0 0 1 .75-.75c.546 0 1.25-.45 1.25-1 0-.786-.7-1.25-1.25-1.25-.474 0-.83.174-1.08.585ZM8 12a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
+        </svg>
+        How it works
+      </button>
+
       {/* Header */}
       <header className="text-center mb-14">
         <h1 className="text-5xl font-bold tracking-tight text-foreground">

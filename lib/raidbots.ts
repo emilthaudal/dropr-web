@@ -6,9 +6,11 @@ export interface DroprItem {
   id: number;
   name: string;
   slot: string;
+  ilvl: number;
   dpsGain: number;
   boss: string;
   icon: string;
+  isCatalyst: boolean;
 }
 
 export interface DroprDungeon {
@@ -46,6 +48,10 @@ interface RBItem {
   name: string;
   icon: string;
   sources: RBSource[];
+  tags?: string[];
+  sourceItem?: {
+    sources?: RBSource[];
+  };
 }
 
 interface RBEncounter {
@@ -102,9 +108,31 @@ export async function fetchAndParse(reportId: string): Promise<DroprPayload> {
   const instanceLibrary = data.simbot.meta.instanceLibrary;
 
   // Build fast lookup maps
+  // Note: a single itemId can appear multiple times in itemLibrary when it has
+  // multiple sourceItems (catalyst items from different source drops). We store
+  // the first entry per id for basic info, but track ALL entries for catalyst
+  // source dungeon resolution.
   const itemMap = new Map<number, RBItem>();
+  // catalystSources: itemId → array of all real instanceIds from sourceItem.sources
+  const catalystSources = new Map<number, Set<number>>();
+
   for (const item of itemLibrary) {
-    itemMap.set(item.id, item);
+    if (!itemMap.has(item.id)) {
+      itemMap.set(item.id, item);
+    }
+
+    const isCatalyst = Array.isArray(item.tags) && item.tags.includes("catalyst");
+    if (isCatalyst && item.sourceItem?.sources) {
+      if (!catalystSources.has(item.id)) {
+        catalystSources.set(item.id, new Set());
+      }
+      const set = catalystSources.get(item.id)!;
+      for (const src of item.sourceItem.sources) {
+        if (src.instanceId > 0) {
+          set.add(src.instanceId);
+        }
+      }
+    }
   }
 
   const instanceMap = new Map<number, RBInstance>();
@@ -116,11 +144,28 @@ export async function fetchAndParse(reportId: string): Promise<DroprPayload> {
   // dungeonItems: instanceId → Map<itemId, best DroprItem>
   const dungeonItems = new Map<number, Map<number, DroprItem>>();
 
+  const upsert = (
+    instanceId: number,
+    itemId: number,
+    entry: DroprItem
+  ) => {
+    if (!dungeonItems.has(instanceId)) {
+      dungeonItems.set(instanceId, new Map());
+    }
+    const existing = dungeonItems.get(instanceId)!;
+    const prev = existing.get(itemId);
+    if (!prev || entry.dpsGain > prev.dpsGain) {
+      existing.set(itemId, entry);
+    }
+  };
+
   for (const result of results) {
+    // Profile name format: instanceId/encounterId/difficulty/itemId/ilvl/enchantId/slot///
     const parts = result.name.split("/");
     if (parts.length < 7) continue;
 
     const itemId = parseInt(parts[3], 10);
+    const ilvl = parseInt(parts[4], 10) || 0;
     const slot = parts[6];
     if (!itemId || !slot) continue;
 
@@ -130,31 +175,47 @@ export async function fetchAndParse(reportId: string): Promise<DroprPayload> {
     const item = itemMap.get(itemId);
     if (!item) continue;
 
-    // Resolve real dungeon(s) from sources
-    for (const src of item.sources) {
-      if (src.instanceId <= 0) continue; // skip M+ pool (-1) and normal pool (-32)
+    const isCatalyst = catalystSources.has(itemId);
 
-      const instance = instanceMap.get(src.instanceId);
-      if (!instance) continue;
+    if (isCatalyst) {
+      // Catalyst items: assign to each dungeon where a sourceItem drops
+      const sourceInstanceIds = catalystSources.get(itemId)!;
+      for (const srcInstanceId of sourceInstanceIds) {
+        const instance = instanceMap.get(srcInstanceId);
+        if (!instance) continue;
 
-      const encounter = instance.encounters.find((e) => e.id === src.encounterId);
-      const bossName = encounter?.name ?? "Unknown Boss";
-
-      if (!dungeonItems.has(src.instanceId)) {
-        dungeonItems.set(src.instanceId, new Map());
-      }
-      const existing = dungeonItems.get(src.instanceId)!;
-
-      // Keep only the highest DPS gain entry per itemId per dungeon
-      const prev = existing.get(itemId);
-      if (!prev || dpsGain > prev.dpsGain) {
-        existing.set(itemId, {
+        // Boss is "Catalyst" since it comes from the catalyst forge, not a boss
+        upsert(srcInstanceId, itemId, {
           id: itemId,
           name: item.name,
           slot,
+          ilvl,
+          dpsGain,
+          boss: "Catalyst",
+          icon: item.icon,
+          isCatalyst: true,
+        });
+      }
+    } else {
+      // Normal items: resolve dungeon(s) from item.sources
+      for (const src of item.sources) {
+        if (src.instanceId <= 0) continue;
+
+        const instance = instanceMap.get(src.instanceId);
+        if (!instance) continue;
+
+        const encounter = instance.encounters.find((e) => e.id === src.encounterId);
+        const bossName = encounter?.name ?? "Unknown Boss";
+
+        upsert(src.instanceId, itemId, {
+          id: itemId,
+          name: item.name,
+          slot,
+          ilvl,
           dpsGain,
           boss: bossName,
           icon: item.icon,
+          isCatalyst: false,
         });
       }
     }

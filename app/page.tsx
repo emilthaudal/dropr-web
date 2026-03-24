@@ -90,9 +90,24 @@ function DungeonCard({
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate leading-tight">
-                {item.name}
-              </p>
+              <div className="flex items-center gap-1.5 leading-tight">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {item.name}
+                  {item.ilvl > 0 && (
+                    <span className="ml-1 text-xs text-muted-foreground font-normal">
+                      ({item.ilvl})
+                    </span>
+                  )}
+                </p>
+                {item.isCatalyst && (
+                  <Badge
+                    variant="outline"
+                    className="shrink-0 text-[10px] px-1 py-0 h-4 border-amber-500/60 text-amber-400 font-rajdhani tracking-wide"
+                  >
+                    Catalyst
+                  </Badge>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground truncate">
                 {SLOT_LABELS[item.slot] ?? item.slot} &middot; {item.boss}
               </p>

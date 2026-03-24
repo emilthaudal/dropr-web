@@ -239,8 +239,8 @@ export default function Home() {
           <p className="mb-2 text-sm font-medium text-foreground">
             Import String
           </p>
-          <div className="bg-card border border-border rounded-lg px-4 py-3.5 mb-2">
-            <p className="font-mono text-[12px] text-muted-foreground break-all leading-relaxed select-all">
+          <div className="bg-card border border-border rounded-lg px-4 py-3.5 mb-2 overflow-hidden">
+            <p className="font-mono text-[12px] text-muted-foreground truncate leading-relaxed select-all">
               {importString}
             </p>
           </div>

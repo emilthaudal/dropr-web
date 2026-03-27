@@ -310,8 +310,13 @@ export default function Home() {
           aria-label="Install on Wago"
           className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors shadow-sm"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/wago-logo.svg" alt="" width={13} height={13} className="shrink-0" style={{ filter: "brightness(0) invert(0.6)" }} />
+          {/* Wago logo — inlined SVG with currentColor so it inherits text color */}
+          <svg width="13" height="13" viewBox="0 0 541.7 311.6" fill="currentColor" className="shrink-0" aria-hidden="true">
+            <path d="M230.8,140.6h79.8a77.11,77.11,0,0,1,60.8-60.7V0A156.13,156.13,0,0,0,230.8,140.6Z"/>
+            <path d="M461.9,140.6h79.8A156.13,156.13,0,0,0,401.1,0V79.8A77.1,77.1,0,0,1,461.9,140.6Z"/>
+            <path d="M310.7,170.9c0-.2.1-.4.1-.6h-80a1.27,1.27,0,0,0,.1.6,77.06,77.06,0,0,1-151.1-.6H0a156.24,156.24,0,0,0,271,90.3,155.38,155.38,0,0,0,100.6,50.3V231A76.93,76.93,0,0,1,310.7,170.9Z"/>
+            <path d="M401.1,231.1V311A156.13,156.13,0,0,0,541.7,170.4H461.9A77.11,77.11,0,0,1,401.1,231.1Z"/>
+          </svg>
           Install on Wago
         </a>
 
@@ -323,8 +328,10 @@ export default function Home() {
           aria-label="Install on CurseForge"
           className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors shadow-sm"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/curseforge.webp" alt="" width={13} height={13} className="shrink-0" style={{ filter: "brightness(0) invert(0.6)" }} />
+          {/* CurseForge logo — inlined SVG anvil shape */}
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" className="shrink-0" aria-hidden="true">
+            <path d="M3 7h4V5H3V3h18v2h-4v2h4v2H3V7zm1 4h16v10H4V11zm3 3v4h10v-4H7z"/>
+          </svg>
           Install on CurseForge
         </a>
 

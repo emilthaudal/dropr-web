@@ -300,17 +300,49 @@ export default function Home() {
     <div className="relative min-h-screen max-w-[860px] mx-auto px-6 py-16 pb-20">
       {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
 
-      {/* Help button — top right */}
-      <button
-        onClick={() => setHelpOpen(true)}
-        aria-label="Help"
-        className="fixed top-4 right-4 z-40 flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors shadow-sm"
-      >
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" className="shrink-0">
-          <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.92 6.085h.001a.749.749 0 1 1-1.342-.67C6.223 4.703 7.033 4.25 8 4.25c1.6 0 2.75 1.082 2.75 2.5 0 1.008-.615 1.7-1.25 2.113v.637a.75.75 0 0 1-1.5 0v-1a.75.75 0 0 1 .75-.75c.546 0 1.25-.45 1.25-1 0-.786-.7-1.25-1.25-1.25-.474 0-.83.174-1.08.585ZM8 12a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
-        </svg>
-        How it works
-      </button>
+      {/* Top-right nav cluster */}
+      <div className="fixed top-4 right-4 z-40 flex items-center gap-1.5">
+        {/* Wago install link */}
+        <a
+          href="https://addons.wago.io/addons/dropr"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Install on Wago"
+          className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors shadow-sm"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/wago-logo.svg" alt="" width={13} height={13} className="shrink-0 opacity-70 group-hover:opacity-100" />
+          Install on Wago
+        </a>
+
+        {/* CurseForge install link */}
+        <a
+          href="https://www.curseforge.com/wow/addons/dropr"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Install on CurseForge"
+          className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors shadow-sm"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/curseforge.webp" alt="" width={13} height={13} className="shrink-0 opacity-70" />
+          Install on CurseForge
+        </a>
+
+        {/* Divider */}
+        <div className="w-px h-4 bg-border mx-0.5" />
+
+        {/* How it works */}
+        <button
+          onClick={() => setHelpOpen(true)}
+          aria-label="Help"
+          className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors shadow-sm"
+        >
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" className="shrink-0">
+            <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.92 6.085h.001a.749.749 0 1 1-1.342-.67C6.223 4.703 7.033 4.25 8 4.25c1.6 0 2.75 1.082 2.75 2.5 0 1.008-.615 1.7-1.25 2.113v.637a.75.75 0 0 1-1.5 0v-1a.75.75 0 0 1 .75-.75c.546 0 1.25-.45 1.25-1 0-.786-.7-1.25-1.25-1.25-.474 0-.83.174-1.08.585ZM8 12a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
+          </svg>
+          How it works
+        </button>
+      </div>
 
       {/* Header */}
       <header className="text-center mb-14">

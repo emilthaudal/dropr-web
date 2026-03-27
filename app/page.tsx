@@ -311,7 +311,7 @@ export default function Home() {
           className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors shadow-sm"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/wago-logo.svg" alt="" width={13} height={13} className="shrink-0 opacity-70 group-hover:opacity-100" />
+          <img src="/wago-logo.svg" alt="" width={13} height={13} className="shrink-0" style={{ filter: "brightness(0) invert(0.6)" }} />
           Install on Wago
         </a>
 
@@ -324,7 +324,7 @@ export default function Home() {
           className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors shadow-sm"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/curseforge.webp" alt="" width={13} height={13} className="shrink-0 opacity-70" />
+          <img src="/curseforge.webp" alt="" width={13} height={13} className="shrink-0" style={{ filter: "brightness(0) invert(0.6)" }} />
           Install on CurseForge
         </a>
 

@@ -72,6 +72,12 @@ interface RBProfilesetResult {
 
 interface RBData {
   sim: {
+    options?: {
+      profileset_metric?: string;
+    };
+    statistics?: {
+      raid_dps?: { mean: number };
+    };
     players: Array<{
       collected_data: { dps: { mean: number } };
     }>;
@@ -102,7 +108,15 @@ export async function fetchAndParse(reportId: string): Promise<DroprPayload> {
 
   const data: RBData = await res.json();
 
-  const baseline = data.sim.players[0].collected_data.dps.mean;
+  // For Augmentation Evoker, Raidbots sims include a full party and the
+  // profileset metric is "raid_dps" (total DPS of all players combined).
+  // Using the Aug's personal DPS as the baseline produces garbage gains (~600k).
+  // When the metric is "raid_dps", use sim.statistics.raid_dps.mean instead.
+  const profilesetMetric = data.sim.options?.profileset_metric ?? "dps";
+  const baseline =
+    profilesetMetric === "raid_dps"
+      ? (data.sim.statistics?.raid_dps?.mean ?? data.sim.players[0].collected_data.dps.mean)
+      : data.sim.players[0].collected_data.dps.mean;
   const results = data.sim.profilesets.results;
   const itemLibrary = data.simbot.meta.itemLibrary;
   const instanceLibrary = data.simbot.meta.instanceLibrary;

@@ -11,6 +11,7 @@ export interface DroprItem {
   boss: string;
   icon: string;
   isCatalyst: boolean;
+  bonusIds: number[]; // WoW bonus IDs encoding ilvl/upgrade track; [] if unavailable
 }
 
 export interface DroprDungeon {
@@ -49,6 +50,7 @@ interface RBItem {
   icon: string;
   sources: RBSource[];
   tags?: string[];
+  bonusLists?: number[];
   sourceItem?: {
     sources?: RBSource[];
   };
@@ -208,6 +210,7 @@ export async function fetchAndParse(reportId: string): Promise<DroprPayload> {
           boss: "Catalyst",
           icon: item.icon,
           isCatalyst: true,
+          bonusIds: item.bonusLists ?? [],
         });
       }
     } else {
@@ -230,6 +233,7 @@ export async function fetchAndParse(reportId: string): Promise<DroprPayload> {
           boss: bossName,
           icon: item.icon,
           isCatalyst: false,
+          bonusIds: item.bonusLists ?? [],
         });
       }
     }

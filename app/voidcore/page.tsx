@@ -205,6 +205,13 @@ export default function VoidcorePage() {
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<VoidcoreAdvisorResult | null>(null);
 
+  // Normalise input: if the user pastes a full Raidbots URL, strip it down to
+  // just the report ID so the field looks clean. Falls back to the raw value.
+  function normalise(value: string): string {
+    const id = extractReportId(value);
+    return id ?? value;
+  }
+
   async function handleAnalyze() {
     const hasM = mplusUrl.trim().length > 0;
     const hasR = raidUrl.trim().length > 0;
@@ -218,13 +225,13 @@ export default function VoidcorePage() {
       const fetches: Promise<VoidcoreAdvisorResult>[] = [];
 
       if (hasM) {
-        const id = extractReportId(mplusUrl.trim());
+        const id = extractReportId(`https://www.raidbots.com/simbot/report/${mplusUrl.trim()}`) ?? mplusUrl.trim();
         if (!id) throw new Error("Invalid M+ Raidbots URL — could not extract report ID.");
         fetches.push(fetchAndParseForVoidcore(id));
       }
 
       if (hasR) {
-        const id = extractReportId(raidUrl.trim());
+        const id = extractReportId(`https://www.raidbots.com/simbot/report/${raidUrl.trim()}`) ?? raidUrl.trim();
         if (!id) throw new Error("Invalid Raid Raidbots URL — could not extract report ID.");
         fetches.push(fetchAndParseForVoidcore(id));
       }
@@ -297,12 +304,13 @@ export default function VoidcorePage() {
           </label>
           <Input
             id="mplus-url"
-            type="url"
-            placeholder="https://www.raidbots.com/simbot/report/..."
+            type="text"
+            placeholder="Paste URL or report ID"
             value={mplusUrl}
-            onChange={(e) => setMplusUrl(e.target.value)}
+            onChange={(e) => setMplusUrl(normalise(e.target.value))}
             onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
             disabled={status === "loading"}
+            autoComplete="off"
             className="h-10 bg-card border-border text-foreground placeholder:text-muted-foreground"
           />
         </div>
@@ -316,12 +324,13 @@ export default function VoidcorePage() {
           </label>
           <Input
             id="raid-url"
-            type="url"
-            placeholder="https://www.raidbots.com/simbot/report/..."
+            type="text"
+            placeholder="Paste URL or report ID"
             value={raidUrl}
-            onChange={(e) => setRaidUrl(e.target.value)}
+            onChange={(e) => setRaidUrl(normalise(e.target.value))}
             onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
             disabled={status === "loading"}
+            autoComplete="off"
             className="h-10 bg-card border-border text-foreground placeholder:text-muted-foreground"
           />
         </div>

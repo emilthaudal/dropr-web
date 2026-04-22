@@ -180,8 +180,11 @@ function parseReport(data: RBData): VoidcoreAdvisorResult {
   // For Raid: accumulate best VoidcoreItem per (instanceId:encounterId, itemId)
   // key = `${instanceId}:${encounterId}`
 
-  // targetItems: targetKey → Map<itemId, VoidcoreItem>
+  // targetItems: targetKey → Map<itemId, VoidcoreItem>  (filtered: dpsGain >= 100)
   const targetItems = new Map<string, Map<number, VoidcoreItem>>();
+  // allSimmedItems: targetKey → Map<itemId, best raw dpsGain (unclamped)>
+  // Tracks ALL simmed items regardless of the >= 100 filter, used for avg calculation.
+  const allSimmedItems = new Map<string, Map<number, number>>();
   // targetMeta: targetKey → { instanceId, encounterId?, instanceName, bossName? }
   const targetMeta = new Map<
     string,
@@ -217,6 +220,19 @@ function parseReport(data: RBData): VoidcoreAdvisorResult {
     }
   };
 
+  // Track all simmed items for avg calculation (regardless of the >= 100 filter).
+  // Keeps the best (highest) raw dpsGain per itemId per targetKey.
+  const upsertSimmed = (targetKey: string, itemId: number, rawDpsGain: number) => {
+    if (!allSimmedItems.has(targetKey)) {
+      allSimmedItems.set(targetKey, new Map());
+    }
+    const existing = allSimmedItems.get(targetKey)!;
+    const prev = existing.get(itemId);
+    if (prev === undefined || rawDpsGain > prev) {
+      existing.set(itemId, rawDpsGain);
+    }
+  };
+
   for (const result of results) {
     const parts = result.name.split("/");
     if (parts.length < 7) continue;
@@ -229,7 +245,6 @@ function parseReport(data: RBData): VoidcoreAdvisorResult {
     if (!itemId || !slot) continue;
 
     const dpsGain = Math.round(result.mean - baseline);
-    if (dpsGain < 100) continue;
 
     const item = itemMap.get(itemId);
     if (!item) continue;
@@ -262,87 +277,35 @@ function parseReport(data: RBData): VoidcoreAdvisorResult {
             );
             const srcBoss = srcEncounter?.name ?? "Unknown Boss";
             const targetKey = `raid-${srcInstanceId}-${src.encounterId}`;
-            upsert(
-              targetKey,
-              itemId,
-              {
-                id: itemId,
-                name: item.name,
-                icon: item.icon,
-                slot,
-                ilvl,
-                dpsGain,
-                isCatalyst: true,
-                bossName: srcBoss,
-              },
-              {
-                instanceId: srcInstanceId,
-                instanceName: srcInstance.name,
-                encounterId: src.encounterId,
-                bossName: srcBoss,
-              }
-            );
+            upsertSimmed(targetKey, itemId, dpsGain);
+            if (dpsGain >= 100) {
+              upsert(
+                targetKey,
+                itemId,
+                {
+                  id: itemId,
+                  name: item.name,
+                  icon: item.icon,
+                  slot,
+                  ilvl,
+                  dpsGain,
+                  isCatalyst: true,
+                  bossName: srcBoss,
+                },
+                {
+                  instanceId: srcInstanceId,
+                  instanceName: srcInstance.name,
+                  encounterId: src.encounterId,
+                  bossName: srcBoss,
+                }
+              );
+            }
           }
         }
       } else {
         const targetKey = `raid-${nameInstanceId}-${nameEncounterId}`;
-        upsert(
-          targetKey,
-          itemId,
-          {
-            id: itemId,
-            name: item.name,
-            icon: item.icon,
-            slot,
-            ilvl,
-            dpsGain,
-            isCatalyst: false,
-            bossName,
-          },
-          {
-            instanceId: nameInstanceId,
-            instanceName: instance.name,
-            encounterId: nameEncounterId,
-            bossName,
-          }
-        );
-      }
-    } else {
-      // M+: profileset name has -1/-1 for instance/encounter.
-      // Attribute via item.sources (or sourceItem.sources for catalysts).
-      if (isCatalyst) {
-        const sourceInstanceIds = catalystSources.get(itemId)!;
-        for (const srcInstanceId of sourceInstanceIds) {
-          const srcInstance = instanceMap.get(srcInstanceId);
-          if (!srcInstance) continue;
-          const targetKey = `mplus-${srcInstanceId}`;
-          upsert(
-            targetKey,
-            itemId,
-            {
-              id: itemId,
-              name: item.name,
-              icon: item.icon,
-              slot,
-              ilvl,
-              dpsGain,
-              isCatalyst: true,
-            },
-            {
-              instanceId: srcInstanceId,
-              instanceName: srcInstance.name,
-            }
-          );
-        }
-      } else {
-        for (const src of item.sources) {
-          if (src.instanceId <= 0) continue;
-          const srcInstance = instanceMap.get(src.instanceId);
-          if (!srcInstance) continue;
-          const encounter = srcInstance.encounters.find(
-            (e) => e.id === src.encounterId
-          );
-          const targetKey = `mplus-${src.instanceId}`;
+        upsertSimmed(targetKey, itemId, dpsGain);
+        if (dpsGain >= 100) {
           upsert(
             targetKey,
             itemId,
@@ -354,13 +317,77 @@ function parseReport(data: RBData): VoidcoreAdvisorResult {
               ilvl,
               dpsGain,
               isCatalyst: false,
-              bossName: encounter?.name,
+              bossName,
             },
             {
-              instanceId: src.instanceId,
-              instanceName: srcInstance.name,
+              instanceId: nameInstanceId,
+              instanceName: instance.name,
+              encounterId: nameEncounterId,
+              bossName,
             }
           );
+        }
+      }
+    } else {
+      // M+: profileset name has -1/-1 for instance/encounter.
+      // Attribute via item.sources (or sourceItem.sources for catalysts).
+      if (isCatalyst) {
+        const sourceInstanceIds = catalystSources.get(itemId)!;
+        for (const srcInstanceId of sourceInstanceIds) {
+          const srcInstance = instanceMap.get(srcInstanceId);
+          if (!srcInstance) continue;
+          const targetKey = `mplus-${srcInstanceId}`;
+          upsertSimmed(targetKey, itemId, dpsGain);
+          if (dpsGain >= 100) {
+            upsert(
+              targetKey,
+              itemId,
+              {
+                id: itemId,
+                name: item.name,
+                icon: item.icon,
+                slot,
+                ilvl,
+                dpsGain,
+                isCatalyst: true,
+              },
+              {
+                instanceId: srcInstanceId,
+                instanceName: srcInstance.name,
+              }
+            );
+          }
+        }
+      } else {
+        for (const src of item.sources) {
+          if (src.instanceId <= 0) continue;
+          const srcInstance = instanceMap.get(src.instanceId);
+          if (!srcInstance) continue;
+          const encounter = srcInstance.encounters.find(
+            (e) => e.id === src.encounterId
+          );
+          const targetKey = `mplus-${src.instanceId}`;
+          upsertSimmed(targetKey, itemId, dpsGain);
+          if (dpsGain >= 100) {
+            upsert(
+              targetKey,
+              itemId,
+              {
+                id: itemId,
+                name: item.name,
+                icon: item.icon,
+                slot,
+                ilvl,
+                dpsGain,
+                isCatalyst: false,
+                bossName: encounter?.name,
+              },
+              {
+                instanceId: src.instanceId,
+                instanceName: srcInstance.name,
+              }
+            );
+          }
         }
       }
     }
@@ -376,7 +403,12 @@ function parseReport(data: RBData): VoidcoreAdvisorResult {
       (a, b) => b.dpsGain - a.dpsGain
     );
     const topItem = allItems[0];
-    const avgDps = allItems.reduce((sum, it) => sum + it.dpsGain, 0) / allItems.length;
+    // avgDps: expected value per roll = sum of clamped gains over ALL simmed items
+    // (including those that didn't pass the >= 100 filter, treated as 0).
+    const simmedForTarget = allSimmedItems.get(targetKey);
+    const avgDps = simmedForTarget && simmedForTarget.size > 0
+      ? Array.from(simmedForTarget.values()).reduce((sum, g) => sum + Math.max(0, g), 0) / simmedForTarget.size
+      : allItems.reduce((sum, it) => sum + it.dpsGain, 0) / allItems.length;
     targets.push({
       key: targetKey,
       reportType,

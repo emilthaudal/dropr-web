@@ -53,7 +53,7 @@ function RollTargetCard({
   rank: number;
   target: RollTarget;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const rest = target.allItems.slice(1);
 
   const title =
@@ -86,7 +86,13 @@ function RollTargetCard({
             {formatDps(target.dpsPerVoidcore)}
           </span>
           <span className="block text-[10px] text-muted-foreground">
-            DPS/voidcore
+            best/voidcore
+          </span>
+          <span className="block text-sm font-semibold text-muted-foreground tabular-nums mt-1">
+            {formatDps(target.avgDpsPerVoidcore)}
+          </span>
+          <span className="block text-[10px] text-muted-foreground">
+            avg/voidcore
           </span>
         </div>
       </div>

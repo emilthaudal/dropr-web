@@ -392,7 +392,7 @@ function parseReport(data: RBData): VoidcoreAdvisorResult {
     });
   }
 
-  targets.sort((a, b) => b.dpsPerVoidcore - a.dpsPerVoidcore);
+  targets.sort((a, b) => b.avgDpsPerVoidcore - a.avgDpsPerVoidcore);
 
   return {
     char: data.simbot.meta.player,
@@ -427,7 +427,7 @@ export function mergeResults(
   b: VoidcoreAdvisorResult
 ): VoidcoreAdvisorResult {
   const merged = [...a.targets, ...b.targets].sort(
-    (x, y) => y.dpsPerVoidcore - x.dpsPerVoidcore
+    (x, y) => y.avgDpsPerVoidcore - x.avgDpsPerVoidcore
   );
   return {
     char: a.char || b.char,

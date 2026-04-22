@@ -34,6 +34,7 @@ export interface RollTarget {
   topItem: VoidcoreItem;
   allItems: VoidcoreItem[]; // sorted by dpsGain desc
   dpsPerVoidcore: number; // topItem.dpsGain / voidcoreCost
+  avgDpsPerVoidcore: number; // average dpsGain across all items / voidcoreCost
 }
 
 export interface VoidcoreAdvisorResult {
@@ -375,6 +376,7 @@ function parseReport(data: RBData): VoidcoreAdvisorResult {
       (a, b) => b.dpsGain - a.dpsGain
     );
     const topItem = allItems[0];
+    const avgDps = allItems.reduce((sum, it) => sum + it.dpsGain, 0) / allItems.length;
     targets.push({
       key: targetKey,
       reportType,
@@ -386,6 +388,7 @@ function parseReport(data: RBData): VoidcoreAdvisorResult {
       topItem,
       allItems,
       dpsPerVoidcore: Math.round(topItem.dpsGain / voidcoreCost),
+      avgDpsPerVoidcore: Math.round(avgDps / voidcoreCost),
     });
   }
 

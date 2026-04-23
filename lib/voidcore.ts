@@ -155,6 +155,11 @@ function parseReport(data: RBData): VoidcoreAdvisorResult {
   const catalystSources = new Map<number, Set<number>>(); // itemId → real instanceIds
 
   for (const item of itemLibrary) {
+    // itemMap stores the first entry per id (for basic info like name/icon).
+    // The catalyst detection MUST NOT be guarded by this check — an item can
+    // appear multiple times in itemLibrary (once as a base drop, once with the
+    // catalyst tag and sourceItem). We need to accumulate catalyst sources from
+    // ALL entries, not just the first-seen one.
     if (!itemMap.has(item.id)) {
       itemMap.set(item.id, item);
     }
@@ -185,6 +190,9 @@ function parseReport(data: RBData): VoidcoreAdvisorResult {
   // allSimmedItems: targetKey → Map<itemId, best raw dpsGain (unclamped)>
   // Tracks ALL simmed items regardless of the >= 100 filter, used for avg calculation.
   const allSimmedItems = new Map<string, Map<number, number>>();
+  // itemSlotMap: itemId → slot string (populated from profileset name during parsing)
+  // Used for slot-level deduplication of allSimmedItems after the main loop.
+  const itemSlotMap = new Map<number, string>();
   // targetMeta: targetKey → { instanceId, encounterId?, instanceName, bossName? }
   const targetMeta = new Map<
     string,
@@ -248,6 +256,11 @@ function parseReport(data: RBData): VoidcoreAdvisorResult {
 
     const item = itemMap.get(itemId);
     if (!item) continue;
+
+    // Record slot for this itemId so we can slot-dedup allSimmedItems later
+    if (!itemSlotMap.has(itemId)) {
+      itemSlotMap.set(itemId, slot);
+    }
 
     const isCatalyst = catalystSources.has(itemId);
 
@@ -390,6 +403,46 @@ function parseReport(data: RBData): VoidcoreAdvisorResult {
           }
         }
       }
+    }
+  }
+
+  // Slot deduplication: if multiple items (e.g. base item + catalyzed version)
+  // occupy the same gear slot for the same target, keep only the one with the
+  // highest dpsGain. This must happen after all upserts so every candidate has
+  // been considered.
+  for (const [targetKey, itemsMap] of targetItems.entries()) {
+    const bestBySlot = new Map<string, VoidcoreItem>();
+    for (const item of itemsMap.values()) {
+      const prev = bestBySlot.get(item.slot);
+      if (!prev || item.dpsGain > prev.dpsGain) {
+        bestBySlot.set(item.slot, item);
+      }
+    }
+    // Rebuild the map keyed by itemId but containing only slot-winners
+    itemsMap.clear();
+    for (const item of bestBySlot.values()) {
+      itemsMap.set(item.id, item);
+    }
+  }
+
+  // Same slot dedup for the allSimmedItems pool used in avg calculation.
+  // We need the best raw dpsGain per slot per target so the pool size and sum
+  // both reflect unique gear slots.
+  for (const [, simmedMap] of allSimmedItems.entries()) {
+    // Map slot → best (itemId, dpsGain) seen in simmedMap
+    const bestSimBySlot = new Map<string, { itemId: number; gain: number }>();
+    for (const [itemId, gain] of simmedMap.entries()) {
+      const slot = itemSlotMap.get(itemId);
+      if (!slot) continue;
+      const prev = bestSimBySlot.get(slot);
+      if (!prev || gain > prev.gain) {
+        bestSimBySlot.set(slot, { itemId, gain });
+      }
+    }
+    // Rebuild simmedMap to contain only slot-winners
+    simmedMap.clear();
+    for (const { itemId, gain } of bestSimBySlot.values()) {
+      simmedMap.set(itemId, gain);
     }
   }
 

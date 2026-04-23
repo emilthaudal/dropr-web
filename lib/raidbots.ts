@@ -133,6 +133,11 @@ export async function fetchAndParse(reportId: string): Promise<DroprPayload> {
   const catalystSources = new Map<number, Set<number>>();
 
   for (const item of itemLibrary) {
+    // itemMap stores the first entry per id (for basic info like name/icon).
+    // The catalyst detection MUST NOT be guarded by this check — an item can
+    // appear multiple times in itemLibrary (once as a base drop, once with the
+    // catalyst tag and sourceItem). We need to accumulate catalyst sources from
+    // ALL entries, not just the first-seen one.
     if (!itemMap.has(item.id)) {
       itemMap.set(item.id, item);
     }
@@ -246,7 +251,18 @@ export async function fetchAndParse(reportId: string): Promise<DroprPayload> {
     const instance = instanceMap.get(instanceId);
     if (!instance) continue;
 
-    const sorted = Array.from(itemsMap.values()).sort(
+    // Slot deduplication: if a base item and its catalyzed version occupy the
+    // same gear slot (they have different itemIds), keep only the one with the
+    // highest dpsGain. This prevents both versions from appearing in the list.
+    const bestBySlot = new Map<string, DroprItem>();
+    for (const item of itemsMap.values()) {
+      const prev = bestBySlot.get(item.slot);
+      if (!prev || item.dpsGain > prev.dpsGain) {
+        bestBySlot.set(item.slot, item);
+      }
+    }
+
+    const sorted = Array.from(bestBySlot.values()).sort(
       (a, b) => b.dpsGain - a.dpsGain
     );
 

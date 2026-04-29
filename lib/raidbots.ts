@@ -251,18 +251,38 @@ export async function fetchAndParse(reportId: string): Promise<DroprPayload> {
     const instance = instanceMap.get(instanceId);
     if (!instance) continue;
 
-    // Slot deduplication: if a base item and its catalyzed version occupy the
-    // same gear slot (they have different itemIds), keep only the one with the
-    // highest dpsGain. This prevents both versions from appearing in the list.
-    const bestBySlot = new Map<string, DroprItem>();
+    // Slot deduplication: if a base item AND its catalyzed version (different
+    // itemIds, same gear slot) both qualify, keep only the one with higher
+    // dpsGain. Multiple distinct non-catalyst items occupying the same slot
+    // type (e.g. two trinkets) are intentionally preserved.
+    const catalystBySlot = new Map<string, DroprItem>();
+    const nonCatalystBySlot = new Map<string, DroprItem[]>();
     for (const item of itemsMap.values()) {
-      const prev = bestBySlot.get(item.slot);
-      if (!prev || item.dpsGain > prev.dpsGain) {
-        bestBySlot.set(item.slot, item);
+      if (item.isCatalyst) {
+        const prev = catalystBySlot.get(item.slot);
+        if (!prev || item.dpsGain > prev.dpsGain) {
+          catalystBySlot.set(item.slot, item);
+        }
+      } else {
+        if (!nonCatalystBySlot.has(item.slot)) nonCatalystBySlot.set(item.slot, []);
+        nonCatalystBySlot.get(item.slot)!.push(item);
+      }
+    }
+    // Resolve catalyst vs non-catalyst conflicts per slot
+    for (const [slot, catalyst] of catalystBySlot.entries()) {
+      const nonCatalysts = nonCatalystBySlot.get(slot) ?? [];
+      const bestNonCatalyst = nonCatalysts.reduce<DroprItem | undefined>(
+        (best, item) => (!best || item.dpsGain > best.dpsGain ? item : best),
+        undefined
+      );
+      if (bestNonCatalyst && bestNonCatalyst.dpsGain >= catalyst.dpsGain) {
+        itemsMap.delete(catalyst.id);
+      } else {
+        for (const item of nonCatalysts) itemsMap.delete(item.id);
       }
     }
 
-    const sorted = Array.from(bestBySlot.values()).sort(
+    const sorted = Array.from(itemsMap.values()).sort(
       (a, b) => b.dpsGain - a.dpsGain
     );
 

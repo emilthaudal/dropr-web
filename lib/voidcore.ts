@@ -406,43 +406,94 @@ function parseReport(data: RBData): VoidcoreAdvisorResult {
     }
   }
 
-  // Slot deduplication: if multiple items (e.g. base item + catalyzed version)
-  // occupy the same gear slot for the same target, keep only the one with the
-  // highest dpsGain. This must happen after all upserts so every candidate has
-  // been considered.
+  // Slot deduplication: if a base item AND its catalyzed version (different
+  // itemIds, same gear slot) both appear for the same target, keep only the
+  // one with the higher dpsGain. This prevents the catalyst and its source
+  // item from both occupying a roll target slot.
+  //
+  // NOTE: This dedup intentionally does NOT eliminate two *distinct* items
+  // that share the same slot string (e.g. two trinkets both tagged trinket2).
+  // Multiple independent items of the same slot type are all valid roll
+  // targets and must all remain in the list.
   for (const [targetKey, itemsMap] of targetItems.entries()) {
-    const bestBySlot = new Map<string, VoidcoreItem>();
+    // Find all (slot, isCatalyst=true) entries — these are the only items that
+    // need deduplication against their non-catalyst counterpart.
+    const catalystBySlot = new Map<string, VoidcoreItem>();
+    const nonCatalystBySlot = new Map<string, VoidcoreItem[]>();
+
     for (const item of itemsMap.values()) {
-      const prev = bestBySlot.get(item.slot);
-      if (!prev || item.dpsGain > prev.dpsGain) {
-        bestBySlot.set(item.slot, item);
+      if (item.isCatalyst) {
+        // Keep the best catalyst per slot
+        const prev = catalystBySlot.get(item.slot);
+        if (!prev || item.dpsGain > prev.dpsGain) {
+          catalystBySlot.set(item.slot, item);
+        }
+      } else {
+        if (!nonCatalystBySlot.has(item.slot)) {
+          nonCatalystBySlot.set(item.slot, []);
+        }
+        nonCatalystBySlot.get(item.slot)!.push(item);
       }
     }
-    // Rebuild the map keyed by itemId but containing only slot-winners
-    itemsMap.clear();
-    for (const item of bestBySlot.values()) {
-      itemsMap.set(item.id, item);
+
+    // For each slot that has a catalyst entry, drop it if any non-catalyst
+    // item for the same slot has a higher (or equal) dpsGain. Otherwise drop
+    // the non-catalyst losers for that slot. Slots with no catalyst entry are
+    // left untouched — all non-catalyst items survive.
+    for (const [slot, catalyst] of catalystBySlot.entries()) {
+      const nonCatalysts = nonCatalystBySlot.get(slot) ?? [];
+      const bestNonCatalyst = nonCatalysts.reduce<VoidcoreItem | undefined>(
+        (best, item) => (!best || item.dpsGain > best.dpsGain ? item : best),
+        undefined
+      );
+      if (bestNonCatalyst && bestNonCatalyst.dpsGain >= catalyst.dpsGain) {
+        // Non-catalyst wins: remove the catalyst entry
+        itemsMap.delete(catalyst.id);
+      } else {
+        // Catalyst wins: remove all non-catalyst entries for this slot
+        for (const item of nonCatalysts) {
+          itemsMap.delete(item.id);
+        }
+      }
     }
   }
 
   // Same slot dedup for the allSimmedItems pool used in avg calculation.
-  // We need the best raw dpsGain per slot per target so the pool size and sum
-  // both reflect unique gear slots.
+  // Only deduplicate catalyst vs non-catalyst pairs sharing the same slot —
+  // distinct non-catalyst items of the same slot type (e.g. two trinkets)
+  // must both be counted in the avg pool.
   for (const [, simmedMap] of allSimmedItems.entries()) {
-    // Map slot → best (itemId, dpsGain) seen in simmedMap
-    const bestSimBySlot = new Map<string, { itemId: number; gain: number }>();
+    // Separate catalyst items from non-catalyst items by slot
+    const catalystSimBySlot = new Map<string, { itemId: number; gain: number }>();
+    const nonCatalystSimBySlot = new Map<string, { itemId: number; gain: number }[]>();
+
     for (const [itemId, gain] of simmedMap.entries()) {
       const slot = itemSlotMap.get(itemId);
       if (!slot) continue;
-      const prev = bestSimBySlot.get(slot);
-      if (!prev || gain > prev.gain) {
-        bestSimBySlot.set(slot, { itemId, gain });
+      if (catalystSources.has(itemId)) {
+        const prev = catalystSimBySlot.get(slot);
+        if (!prev || gain > prev.gain) {
+          catalystSimBySlot.set(slot, { itemId, gain });
+        }
+      } else {
+        if (!nonCatalystSimBySlot.has(slot)) nonCatalystSimBySlot.set(slot, []);
+        nonCatalystSimBySlot.get(slot)!.push({ itemId, gain });
       }
     }
-    // Rebuild simmedMap to contain only slot-winners
-    simmedMap.clear();
-    for (const { itemId, gain } of bestSimBySlot.values()) {
-      simmedMap.set(itemId, gain);
+
+    // Remove catalyst entries that lose to their non-catalyst counterpart,
+    // or remove non-catalyst losers when the catalyst wins.
+    for (const [slot, catalyst] of catalystSimBySlot.entries()) {
+      const nonCatalysts = nonCatalystSimBySlot.get(slot) ?? [];
+      const bestNonCatalyst = nonCatalysts.reduce<{ itemId: number; gain: number } | undefined>(
+        (best, item) => (!best || item.gain > best.gain ? item : best),
+        undefined
+      );
+      if (bestNonCatalyst && bestNonCatalyst.gain >= catalyst.gain) {
+        simmedMap.delete(catalyst.itemId);
+      } else {
+        for (const item of nonCatalysts) simmedMap.delete(item.itemId);
+      }
     }
   }
 
